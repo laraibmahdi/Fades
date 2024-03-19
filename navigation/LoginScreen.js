@@ -2,7 +2,9 @@ import { useNavigation } from '@react-navigation/core'
 import React, { useEffect, useState } from 'react'
 import { KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@firebase/auth'
-import { auth } from '../firebase'
+import { auth,firestore } from '../firebase'
+import { collection, addDoc,setDoc, doc, getDoc } from "@firebase/firestore"; 
+
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('')
@@ -10,33 +12,64 @@ const LoginScreen = () => {
 
   const navigation = useNavigation()
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      if (user) {
-        navigation.replace("MainContainer")
+  // useEffect(() => {
+  //   const unsubscribe = onAuthStateChanged(auth, user => {
+  //     if (user.Type === 'customer') {
+  //       navigation.replace("MainContainer")
+  //     } else if (user.Type === 'admin'){
+  //       navigation.replace("AdminContainer")
+  //     }
+  //   })
+
+  //   return unsubscribe
+  // }, [auth])
+
+  const handleSignUp = async () => {
+    try {
+      const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredentials.user;
+      console.log('Registered with:', user.email);
+  
+      // Store user's account type in Firestore with the same user ID
+      await setDoc(doc(firestore, "users", user.uid), {
+        Email: email,
+        Type: 'customer'
+      });
+  
+      // After signing up, directly navigate based on user's type
+      navigation.replace("MainContainer");
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      const userCredentials = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredentials.user;
+      console.log('Logged in with:', user.email);
+  
+      // After logging in, directly navigate based on user's type
+      const userRef = doc(firestore, "users", user.uid);
+      console.log(user.uid);
+      const docSnapshot = await getDoc(userRef);
+      if (docSnapshot.exists()) {
+        const userType = docSnapshot.data().Type;
+        if (userType === 'customer') {
+          navigation.replace("MainContainer");
+        } else if (userType === 'admin') {
+          navigation.replace("AdminContainer");
+        }
+      } else {
+        // Handle case when user document doesn't exist
+        console.log("User document not found");
       }
-    })
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+  
 
-    return unsubscribe
-  }, [auth])
-
-  const handleSignUp = () => {
-      createUserWithEmailAndPassword(auth, email, password)
-      .then(userCredentials => {
-        const user = userCredentials.user;
-        console.log('Registered with:', user.email);
-      })
-      .catch(error => alert(error.message))
-  }
-
-  const handleLogin = () => {
-      signInWithEmailAndPassword(auth, email, password)
-      .then(userCredentials => {
-        const user = userCredentials.user;
-        console.log('Logged in with:', user.email);
-      })
-      .catch(error => alert(error.message))
-  }
 
   return (
     <KeyboardAvoidingView
