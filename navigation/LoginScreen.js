@@ -1,34 +1,21 @@
-import { useNavigation } from '@react-navigation/core'
-import React, { useEffect, useState } from 'react'
-import { KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@firebase/auth'
-import { auth,firestore } from '../firebase'
-import { collection, addDoc,setDoc, doc, getDoc } from "@firebase/firestore"; 
-
+import { useNavigation } from '@react-navigation/core';
+import React, { useState } from 'react';
+import { KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@firebase/auth';
+import { auth, firestore } from '../firebase';
+import { collection, addDoc, setDoc, doc, getDoc } from "@firebase/firestore";
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const navigation = useNavigation()
+  const navigation = useNavigation();
 
-  // useEffect(() => {
-  //   const unsubscribe = onAuthStateChanged(auth, user => {
-  //     if (user.Type === 'customer') {
-  //       navigation.replace("MainContainer")
-  //     } else if (user.Type === 'admin'){
-  //       navigation.replace("AdminContainer")
-  //     }
-  //   })
-
-  //   return unsubscribe
-  // }, [auth])
-
-  const handleSignUp = async () => {
+  const handleCustomerSignUp = async () => {
     try {
       const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredentials.user;
-      console.log('Registered with:', user.email);
+      console.log('Registered as a customer with:', user.email);
   
       // Store user's account type in Firestore with the same user ID
       await setDoc(doc(firestore, "users", user.uid), {
@@ -36,8 +23,28 @@ const LoginScreen = () => {
         Type: 'customer'
       });
   
-      // After signing up, directly navigate based on user's type
+      // After signing up, directly navigate to the customer dashboard
       navigation.replace("MainContainer");
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleBarberSignUp = async () => {
+    try {
+      const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredentials.user;
+      console.log('Registered as a barber with:', user.email);
+  
+      // Store user's account type in Firestore with the same user ID
+      await setDoc(doc(firestore, "barbers", user.uid), {
+        Email: email,
+        appointmentRef: null,
+        availability: true,
+        verified: false,
+      });
+  
+      // After signing up, directly navigate to the barber dashboard
     } catch (error) {
       alert(error.message);
     }
@@ -49,25 +56,39 @@ const LoginScreen = () => {
       const user = userCredentials.user;
       console.log('Logged in with:', user.email);
   
-      // After logging in, directly navigate based on user's type
-      const userRef = doc(firestore, "users", user.uid);
-      console.log(user.uid);
-      const docSnapshot = await getDoc(userRef);
-      if (docSnapshot.exists()) {
-        const userType = docSnapshot.data().Type;
-        if (userType === 'customer') {
-          navigation.replace("MainContainer");
-        } else if (userType === 'admin') {
+      // Check if the user exists in the "barbers" collection
+      const barberRef = doc(firestore, "barbers", user.uid);
+      const barberSnapshot = await getDoc(barberRef);
+  
+      if (barberSnapshot.exists()) {
+        const barberData = barberSnapshot.data();
+        
+        // Check if the barber is verified
+        if (barberData.verified === true) {
           navigation.replace("AdminContainer");
+          return; // Exit the function early if the user is a verified barber
+        } else {
+          // Barber is not verified, show error message or handle accordingly
+          console.log("Barber is not verified");
+          return;
         }
-      } else {
-        // Handle case when user document doesn't exist
-        console.log("User document not found");
       }
+  
+      // Check if the user exists in the "customers" collection
+      const customerRef = doc(firestore, "users", user.uid);
+      const customerSnapshot = await getDoc(customerRef);
+      if (customerSnapshot.exists()) {
+        navigation.replace("MainContainer");
+        return; // Exit the function early if the user is a customer
+      }
+  
+      // If the user is not found in either collection
+      console.log("User document not found");
     } catch (error) {
       alert(error.message);
     }
   };
+  
   
 
 
@@ -100,17 +121,23 @@ const LoginScreen = () => {
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={handleSignUp}
+          onPress={handleCustomerSignUp}
           style={[styles.button, styles.buttonOutline]}
         >
-          <Text style={styles.buttonOutlineText}>Register</Text>
+          <Text style={styles.buttonOutlineText}>Register as Customer</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleBarberSignUp}
+          style={[styles.button, styles.buttonOutline]}
+        >
+          <Text style={styles.buttonOutlineText}>Register as Barber</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   )
 }
 
-export default LoginScreen
+export default LoginScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -157,4 +184,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
-})
+});
