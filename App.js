@@ -6,6 +6,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from './navigation/LoginScreen';
 import MainContainer from './navigation/MainContainer';
 import AdminContainer from './navigation/AdminContainer';
+import Barbers from './navigation/BarbersContainer';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -16,6 +18,7 @@ export default function App() {
         <Stack.Screen options={{ headerShown: false }} name="Login" component={LoginScreen} />
         <Stack.Screen name= "MainContainer" component={MainContainer} />
         <Stack.Screen name= "AdminContainer" component={AdminContainer} />
+        <Stack.Screen name="Barbers" component={Barbers} />
       </Stack.Navigator>
     </NavigationContainer>
   );
