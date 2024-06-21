@@ -35,31 +35,3 @@ export default function Appointment({ navigation }) {
         </View>
     );
 }
-// for admins to get a notification whenever a user books an appointment
-
-// const functions = require('firebase-functions');
-// const admin = require('firebase-admin');
-// admin.initializeApp();
-
-// exports.sendAppointmentNotification = functions.firestore
-//     .document('appointments/{appointmentId}')
-//     .onCreate(async (snapshot, context) => {
-//         const appointmentData = snapshot.data();
-//         const adminId = appointmentData.adminId;
-
-//         // Get admin's device token from Firestore
-//         const adminDoc = await admin.firestore().collection('admins').doc(adminId).get();
-//         const adminData = adminDoc.data();
-//         const adminDeviceToken = adminData.deviceToken;
-
-//         // Notification payload
-//         const payload = {
-//             notification: {
-//                 title: 'New Appointment Request',
-//                 body: 'You have received a new appointment request.',
-//             }
-//         };
-
-//         // Send notification to admin's device
-//         return admin.messaging().sendToDevice(adminDeviceToken, payload);
-//     });

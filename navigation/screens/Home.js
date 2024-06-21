@@ -1,13 +1,32 @@
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, StatusBar, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Image } from 'react-native';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import app from '../../App';
 
 export default function Home({ navigation }) {
-    const data = [
-        { key: '1', text: 'Hair Affair', image: require('../../assets/icon.png') },
-        // Add more items as needed
-    ];
+    const [data, setData] = useState([]);
+    const firestore = getFirestore(app);
+
+    useEffect(() => {
+        const fetchBarberShops = async () => {
+          try {
+            const barberShopsCollection = collection(firestore, 'barberShops');
+            const barberShopsSnapshot = await getDocs(barberShopsCollection);
+            const shops = barberShopsSnapshot.docs.map(doc => ({
+              ...doc.data(),
+              key: doc.id,
+            }));
+            setData(shops);
+          } catch (error) {
+            console.error('Error fetching barber shops: ', error);
+          }
+        };
+    
+        fetchBarberShops();
+      }, []);
 
     const handlePress = (item) => {
         navigation.navigate('Barbers', { barbershop: item });
@@ -15,8 +34,8 @@ export default function Home({ navigation }) {
 
     const Item = ({ item }) => (
         <TouchableOpacity style={styles.item} onPress={() => handlePress(item)}>
-            <Image source={item.image} style={styles.image} />
-            <Text style={styles.title}>{item.text}</Text>
+            <Image source={{ uri: item.image }} style={styles.image} />
+            <Text style={styles.title}>{item.name}</Text>
             <View style={styles.infoContainer}>
                 <Ionicons name="heart" size={25} color="red" style={styles.icon} />
                 <Text style={styles.ratings}>5.0</Text>
