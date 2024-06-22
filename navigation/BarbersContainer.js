@@ -8,6 +8,7 @@ export default function Barbers({ route }) {
         { key: '2', name: 'Barber B' },
         { key: '3', name: 'Barber C' },
         // Add more barbers as needed
+        // Barbers should also take information from the firestore database
     ];
 
     return (

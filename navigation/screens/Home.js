@@ -2,13 +2,13 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, StatusBar, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Image } from 'react-native';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import app from '../../App';
+import { firestore } from '../../firebase';
 
 export default function Home({ navigation }) {
     const [data, setData] = useState([]);
-    const firestore = getFirestore(app);
+
 
     useEffect(() => {
         const fetchBarberShops = async () => {
